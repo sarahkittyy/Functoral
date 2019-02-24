@@ -173,4 +173,14 @@ inc(inc(2)) !! Four
 		[+ 1 ^inc(1)$] !! 3
 	)$
 ] !! Returns 12
-``` 
+```
+
+---
+
+## Extras
+
+`print(text...)` prints the string (no quotes) inside.
+
+Spaces work normally, but use `\s` appended to the end for a trailing space.
+
+Also note that despite the examples here, expressions can't be freely used. They must be inside function bodies or in calls.
