@@ -128,7 +128,8 @@ def getInnerBlocks(string, begin, end, sep = [","]):
 		name = item['name'].strip()
 		params = []
 		for i in item['params']:
-			inner = getInnerBlocks(i.strip(), begin, end, sep)
+			cstr = i.strip()
+			inner = getInnerBlocks(cstr, begin, end, sep)
 			if inner and len(inner) != 0:
 				params.extend(inner)
 			else:

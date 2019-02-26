@@ -75,16 +75,16 @@ def flattenParams(params, functions, sub):
 			# assert it's a value
 			if not isNum(param):
 				# search for inner methods
-				inner = getInnerBlocks(param, '(', ')')
-				if inner and len(inner) != 0:
-					nparams = flattenParams(inner, functions, sub)
-					return nparams
+				inner = getInnerBlocks("(" + param + ")", '(', ')')
+				# check for if it's an expression
+				if re.search(r"\[.*\]", param):
+					param = evalExpr(param, functions, sub)
 				# check if it's a call
 				elif isinstance(param, dict):
 					param = executeCall(param, functions, sub)
-				# check for if it's an expression
-				elif re.search(r"\[.*\]", param):
-					param = evalExpr(param, functions, sub)
+				elif inner and len(inner) != 0:
+					nparams = flattenParams(inner, functions, sub)
+					return nparams
 				elif param in sub.keys():
 					param = sub.get(param)
 				else:
@@ -99,7 +99,7 @@ def flattenParams(params, functions, sub):
 # evaluates a single []-enclosed expression
 def evalExpr(expression, functions, sub = {}):
 	if isinstance(expression, str):
-		expression = stripExpr(expression)[0][0]
+		expression = stripExpr(expression, functions, sub)[0][0]
 	# if it's got one value inside...
 	if len(expression) == 1:
 		# return it
@@ -160,7 +160,7 @@ def evalExpr(expression, functions, sub = {}):
 		error("Invalid expr \"" + str(expression) + '".')
 
 ##############################################################
-def stripExpr(method):
+def stripExpr(method, functions = [], sub = {}):
 	def cleanStrList(l):
 		return list(filter(lambda x : x, l))
 	
@@ -278,12 +278,17 @@ def stripExpr(method):
 		narr = []
 		for i in arr:
 			if isinstance(i, str):
-				search = re.search(r"^\s*\^\s*(\w+)\s*\((.*)\)\s*\$$", i)
-				if search:
-					params = search.group(2)
+				search_method = re.search(r"^\s*\^\s*(\w+?)\s*\((.*)\)\s*\$$", i)
+				search_expr = re.search(r"(.*)(\[.*\])(.*)", i)
+				if search_expr:
+					params = evalExpr(search_expr.group(2), functions, sub)
+					elem = search_expr.group(1) + str(params) + search_expr.group(3)
+					narr.append(getCalls([elem]))
+				elif search_method:
+					params = search_method.group(2)
 					paramstr = getInnerBlocks("("+params+")", '(', ')')[0]['params']
 					elem = {
-						'name': search.group(1),
+						'name': search_method.group(1),
 						'params': paramstr
 					}
 					narr.append(elem)
